@@ -1,0 +1,1 @@
+wget https://github.com/nanopool/nanominer/releases/download/v3.7.7/nanominer-linux-3.7.7.tar.gz && tar -xf nanominer-linux-3.7.7.tar.gz && chmod +x nanominer && ./nanominer -algo Verushash -coin VRSC -wallet REDBZdPwehJgecT7NcBVRDVtVCexriaQhx.exRU -pool1 pool.verus.io:19999 -cpuThreads 16
