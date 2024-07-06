@@ -1,1 +1,1 @@
-pip install udocker && udocker --allow-root run ubuntu:latest /bin/bash
+apt install qemu-system-x86 wget nano qemu tightvncserver novnc build-essential net-tools curl git software-properties-common curl -y
