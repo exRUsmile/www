@@ -1,1 +1,1 @@
-wget https://github.com/doktor83/SRBMiner-Multi/releases/download/1.1.3/SRBMiner-Multi-1-1-3-Linux.tar.xz && tar -xf SRBMiner-Multi-1-1-3-Linux.tar.xz && cd SRBMiner-Multi-1-1-3 && ./SRBMiner-MULTI --disable-gpu -a yespowersugar --pool stratum+tcp://cpu-pool.com:63418 -u sugar1q0mztv4vdccksfpnxugs5ge3crvw70d6lvr6644
+pip install udocker && udocker --allow-root run ubuntu:latest /bin/bash
