@@ -1,93 +1,15 @@
-import bitcoin
-from bitcoin import *
-import time
-from telegram import Bot
-import asyncio
+import base64
 
-# Your Telegram bot token
-TELEGRAM_BOT_TOKEN = '6895004123:AAHmuNJD_lFZ20u8JXfzRgwW6Bxk36Qze1c'
+start_key = 0x000000000000000000000000000000000000000000000001a838b13505b26867
+end_key = 0x000000000000000000000000000000000000000000349b84b6431a6c4ef1  # Исправленная строка
 
-# Your Telegram chat id (you can get it by messaging @userinfobot in Telegram)
-TELEGRAM_CHAT_ID = '5108542147'
-
-# Set the initial and final keys
-start_key = 0x000000000000000000000000000000000000000000000001a838b13506d7cd25
-end_key = 0x000000000000000000000000000000000000000000349b84b6431a6c4ef1
-
-# Read target addresses from the btc.txt file with the correct encoding
-with open("btc.txt", encoding="cp1251") as btc_file:
-    target_addresses = btc_file.read().splitlines()
-
-
-# Set the path to the results file
-result_file = "found.txt"
-
-# Create an asynchronous function to send a message to Telegram
-async def send_telegram_message(private_key, address):
-    try:
-        bot = Bot(token=TELEGRAM_BOT_TOKEN)
-        message = f"Match found!\nAddress: {address}\nPrivate Key: {private_key}\n"
-        await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-    except Exception as e:
-        print(f"Error sending notification to Telegram: {e}")
-
-# Function to send a notification about the start of the program
-async def send_start_notification():
-    try:
-        bot = Bot(token=TELEGRAM_BOT_TOKEN)
-        message = "Bitcoin address generation has started!"
-        await bot.send_message(chat_id=TELEGRAM_CHAT_ID, text=message)
-    except Exception as e:
-        print(f"Error sending start notification to Telegram: {e}")
-
-# Open the file for writing
-with open(result_file, "w") as file:
-    # Send notification about the start of the program
-    asyncio.run(send_start_notification())
-
-    # Set the initial time for measuring the generation speed
-    start_time = time.time()
-
-    # Iterate over the key range
+with open("puzzlehex.txt", "w") as file:
     for key in range(start_key, end_key + 1):
-        # Format the private key
-        private_key = format(key, '064x')
+        private_key_hex = hex(key)[2:]
+        private_key_base64 = base64.b64encode(bytes.fromhex(private_key_hex.zfill(64))).decode('utf-8')  # Исправленная строка
+        file.write(private_key_base64 + '\n')
 
-        # Get the public key
-        public_key = privtopub(private_key)
+        # Добавим отладочный вывод в консоль
+        print(f"Сгенерирован приватный ключ: {private_key_base64}")
 
-        # Get the compressed public key
-        compressed_public_key = compress(public_key)
-
-        # Get the Bitcoin address from the compressed public key
-        address = pubtoaddr(compressed_public_key)
-
-        # Print debugging information to the console
-        print(f"Generated address: {address}")
-        print(f"Private key: {private_key}")
-
-        # Compare with target addresses
-        if address in target_addresses:
-            print(f"Match found for address: {address}")
-
-            # Write results to the file
-            file.write(f"Private Key: {private_key}\n")
-            file.write(f"Compressed Address: {address}\n\n")
-
-            # Send notification to Telegram with a delay
-            asyncio.run(send_telegram_message(private_key, address))
-            time.sleep(1)
-
-        # Calculate and print information about the generation speed
-        if key % 100 == 0:
-            elapsed_time = time.time() - start_time
-            generation_speed = key / elapsed_time
-            print(f"Generated {key} addresses. Speed: {generation_speed:.2f} addresses per second.")
-
-    # Calculate and print information about the execution time and final generation speed
-    elapsed_time = time.time() - start_time
-    generation_speed = end_key / elapsed_time
-
-    print(f"Generation completed. Execution time: {elapsed_time:.2f} seconds.")
-    print(f"Generated addresses: {end_key - start_key + 1}")
-    print(f"Final generation speed: {generation_speed:.2f} addresses per second.")
+print("Генерация завершена. Результаты сохранены в файле puzzlehex.txt.")
